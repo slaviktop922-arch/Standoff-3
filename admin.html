@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Standoff 3 — Панель промокодов</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0d12;--panel:#111720;--panel2:#171f2a;--line:#273342;--text:#f1f5f9;--muted:#94a3b8;--red:#f04452;--red2:#bd2635;--green:#41d69a;--amber:#ffca70}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top right,#24131b 0,transparent 36%),var(--bg);font:15px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:var(--text)}
+header{border-bottom:1px solid var(--line);background:#0b0f15e8;padding:18px 24px;position:sticky;top:0;z-index:2;backdrop-filter:blur(12px)}
+.wrap{max-width:1120px;margin:auto}.brand{display:flex;align-items:center;gap:12px}.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,var(--red),#811b2b);display:grid;place-items:center;font-weight:900;letter-spacing:-2px;font-size:17px;box-shadow:0 8px 25px #f044522b}.brand h1{font-size:17px;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}.tag{margin-left:auto;border:1px solid #5c3940;color:#ff9ca4;border-radius:99px;padding:6px 10px;font-size:11px;letter-spacing:.07em}
+main{max-width:1120px;margin:28px auto;padding:0 18px 50px}.intro{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:22px}.eyebrow{color:var(--red);font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase}.intro h2{font-size:clamp(25px,4vw,34px);margin:6px 0}.intro p{color:var(--muted);margin:0;max-width:660px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}.stat,.panel{background:linear-gradient(145deg,var(--panel),#0e131a);border:1px solid var(--line);border-radius:16px}.stat{padding:17px}.stat span{color:var(--muted);font-size:12px}.stat strong{display:block;font-size:27px;margin-top:6px}.layout{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:18px;align-items:start}.panel{padding:20px}.panel h3{margin:0 0 5px;font-size:18px}.sub{color:var(--muted);font-size:12px;margin:0 0 19px}.field{margin-bottom:15px}.field label{display:block;font-size:12px;font-weight:700;color:#c7d1df;margin-bottom:7px}.field input,.field select{width:100%;background:#0b1016;border:1px solid #303d4e;border-radius:10px;color:var(--text);padding:12px;font:inherit;outline:none}.field input:focus,.field select:focus{border-color:var(--red);box-shadow:0 0 0 3px #f044521b}.hint{font-size:11px;color:var(--muted);margin-top:6px}.checkrow{display:flex;align-items:center;gap:10px;background:#0b1016;border:1px solid #303d4e;border-radius:10px;padding:12px;margin-bottom:14px}.checkrow input{accent-color:var(--red);width:17px;height:17px}.checkrow label{font-size:13px;cursor:pointer}.hidden{display:none!important}.btn{border:0;border-radius:10px;padding:12px 15px;font:700 13px system-ui;cursor:pointer;transition:.15s}.btn-primary{width:100%;background:linear-gradient(135deg,var(--red),var(--red2));color:white;box-shadow:0 8px 20px #f0445220}.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px)}.btn-ghost{background:#202a37;border:1px solid #344255;color:#e5edf7}.btn-danger{background:#35181e;border:1px solid #70303b;color:#ff9ca4}.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin:0 0 14px}.toolbar h3{margin:0}.search{flex:1;min-width:130px;max-width:240px;background:#0b1016;border:1px solid #303d4e;border-radius:9px;padding:9px 11px;color:white;font:inherit}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:590px}th{text-align:left;font-size:10px;letter-spacing:.08em;color:#8291a5;font-weight:800;padding:12px 10px;border-bottom:1px solid var(--line)}td{padding:14px 10px;border-bottom:1px solid #202a36;font-size:12px;vertical-align:middle}tr:last-child td{border-bottom:0}.code{font:800 13px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em;color:#fff}.reward{color:#cbd5e1}.pill{display:inline-block;border-radius:99px;padding:4px 8px;font-size:10px;font-weight:800;white-space:nowrap}.pill-live{background:#103629;color:#70e8b4}.pill-expired{background:#38252a;color:#ff9ca4}.pill-limit{background:#392e1b;color:var(--amber)}.actions{display:flex;gap:6px}.smallbtn{padding:6px 8px;border-radius:7px;font-size:10px}.empty{text-align:center;padding:38px 15px;color:var(--muted)}.empty strong{display:block;color:#dbe4ef;margin-bottom:5px}.notice{border:1px solid #574728;background:#211c12;color:#e9d5a5;border-radius:12px;padding:13px 15px;font-size:12px;margin-top:18px}.notice b{color:#ffe6a7}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#192a23;border:1px solid #2c624a;color:#a6f4cb;border-radius:10px;padding:11px 15px;box-shadow:0 8px 30px #0008;z-index:5;max-width:90%;font-size:13px}.footer{color:#637186;font-size:11px;text-align:center;margin-top:24px}
+@media(max-width:780px){.layout{grid-template-columns:1fr}.intro{align-items:start;flex-direction:column}.tag{display:none}.stats{gap:8px}.stat{padding:12px}.stat strong{font-size:23px}.panel{padding:16px}}
+</style>
+</head>
+<body>
+<header><div class="wrap brand"><div class="logo">S3</div><div><h1>STANDOFF 3 <span style="color:#94a3b8;font-weight:500">/ PROMO CONTROL</span></h1><p>Панель управления промокодами</p></div><span class="tag">DEMO · НЕОФИЦИАЛЬНО</span></div></header>
+<main>
+<section class="intro"><div><div class="eyebrow">Управление наградами</div><h2>Промокоды</h2><p>Создавай коды, задавай награду, лимит активаций или срок действия без лимита.</p></div></section>
+<section class="stats">
+ <div class="stat"><span>Всего кодов</span><strong id="statTotal">0</strong></div>
+ <div class="stat"><span>Активные коды</span><strong id="statActive">0</strong></div>
+ <div class="stat"><span>Общий лимит активаций</span><strong id="statLimit">0</strong></div>
+</section>
+<div class="layout">
+<section class="panel">
+<h3 id="formTitle">Создать промокод</h3><p class="sub">Заполни параметры новой награды.</p>
+<form id="promoForm">
+ <div class="field"><label for="code">ПРОМОКОД</label><input id="code" required maxlength="32" placeholder="Например, WELCOME3" autocomplete="off" pattern="[A-Za-z0-9_-]+" title="Только латинские буквы, цифры, дефис и подчёркивание"><div class="hint">Латинские буквы, цифры, _ и -</div></div>
+ <div class="field"><label for="reward">НАГРАДА</label><input id="reward" required maxlength="100" placeholder="Например, 500 монет"></div>
+ <div class="checkrow"><input type="checkbox" id="unlimited"><label for="unlimited">Неограниченное количество активаций</label></div>
+ <div class="field" id="limitField"><label for="limit">КОЛИЧЕСТВО АКТИВАЦИЙ</label><input id="limit" type="number" min="1" max="100000000" step="1" value="100"><div class="hint">Сколько раз код можно активировать суммарно.</div></div>
+ <div class="field hidden" id="durationField"><label for="duration">СРОК ДЕЙСТВИЯ</label><input id="duration" type="number" min="1" max="87600" step="1" value="24"><select id="unit" style="margin-top:8px"><option value="hours">Часы</option><option value="days" selected>Дни</option><option value="minutes">Минуты</option></select><div class="hint">После этого срока код станет недействительным.</div></div>
+ <div class="field"><label for="starts">НАЧАЛО ДЕЙСТВИЯ</label><select id="starts"><option value="now">Сразу после создания</option><option value="later">Через 1 час (тест)</option></select></div>
+ <button class="btn btn-primary" type="submit" id="submitBtn">＋ СОЗДАТЬ ПРОМОКОД</button>
+ <button class="btn btn-ghost hidden" type="button" id="cancelEdit" style="width:100%;margin-top:8px">Отменить редактирование</button>
+</form>
+</section>
+<section class="panel">
+<div class="toolbar"><h3>Список промокодов</h3><input class="search" id="search" placeholder="Найти код…"><div style="display:flex;gap:7px"><button class="btn btn-ghost" id="exportBtn" type="button">Экспорт</button><button class="btn btn-ghost" id="importBtn" type="button">Импорт</button><input type="file" id="importFile" accept=".json,application/json" class="hidden"></div></div>
+<div class="table-wrap"><table><thead><tr><th>ПРОМОКОД / НАГРАДА</th><th>АКТИВАЦИИ</th><th>СТАТУС / СРОК</th><th>ДЕЙСТВИЯ</th></tr></thead><tbody id="promoRows"></tbody></table><div class="empty" id="empty"><strong>Промокодов пока нет</strong>Создай первый промокод в форме слева.</div></div>
+<div class="notice"><b>Важно:</b> это локальная демоверсия. Данные сохраняются только в этом браузере. Экспортируй JSON, чтобы сделать резервную копию. Для настоящей активации игроками нужен сервер и общая база данных — браузерная панель сама по себе не проверяет коды на сайте игры.</div>
+</section>
+</div>
+<div class="footer">Fan-made demo · Не является официальным сервисом Standoff 3</div>
+</main>
+<div id="toast" class="toast hidden" role="status"></div>
+<script>
+const STORAGE='s3_promo_admin_v1';
+let promos=[];let editing=null;let toastTimer;
+const $=id=>document.getElementById(id);
+async function load(){try{const r=await fetch('/api/promos');const j=await r.json();promos=j.promos||[];}catch{promos=[];showToast('Сервер недоступен — запусти server.js')}render()}
+async function save(){try{const r=await fetch('/api/promos'+(editing?'/'+encodeURIComponent(editing):''),{method:editing?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(window._pendingPromo)});const j=await r.json();if(!r.ok)throw Error(j.error||'Ошибка сервера');promos=j.promos||[];render()}catch(e){showToast(e.message)}}
+function showToast(msg){$('toast').textContent=msg;$('toast').classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),2600)}
+function unlimitedUI(){const u=$('unlimited').checked;$('limitField').classList.toggle('hidden',u);$('durationField').classList.toggle('hidden',!u);$('limit').required=!u;$('duration').required=u}
+function expiresAt(){const n=Number($('duration').value);const unit=$('unit').value;const mult=unit==='minutes'?60000:unit==='hours'?3600000:86400000;return Date.now()+n*mult}
+function status(p){const now=Date.now();if(p.expiresAt&&now>=p.expiresAt)return 'Истёк';if(p.startsAt&&now<p.startsAt)return 'Ожидает';if(!p.unlimited&&p.used>=p.limit)return 'Лимит исчерпан';return 'Активен'}
+function fmtDate(v){if(!v)return 'Без срока';return new Date(v).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(){
+ const q=$('search').value.trim().toLowerCase();const list=promos.filter(p=>p.code.toLowerCase().includes(q)||p.reward.toLowerCase().includes(q));
+ $('statTotal').textContent=promos.length;
+ $('statActive').textContent=promos.filter(p=>status(p)==='Активен').length;
+ $('statLimit').textContent=promos.reduce((n,p)=>n+(p.unlimited?0:Number(p.limit)||0),0).toLocaleString('ru-RU');
+ $('promoRows').innerHTML=list.map(p=>{const st=status(p);const cls=st==='Активен'?'pill-live':st==='Лимит исчерпан'||st==='Истёк'?'pill-expired':'pill-limit';const usage=p.unlimited?`${p.used} / ∞`:`${p.used} / ${p.limit}`;const until=p.unlimited?`До ${fmtDate(p.expiresAt)}`:p.expiresAt?`До ${fmtDate(p.expiresAt)}`:'Без срока';
+ return `<tr><td><div class="code">${esc(p.code)}</div><div class="reward">${esc(p.reward)}</div></td><td>${usage}</td><td><span class="pill ${cls}">${st}</span><div class="hint">${until}</div></td><td><div class="actions"><button class="btn btn-ghost smallbtn" onclick="editPromo('${p.id}')">Изменить</button><button class="btn btn-danger smallbtn" onclick="deletePromo('${p.id}')">Удалить</button></div></td></tr>`}).join('');
+ $('empty').classList.toggle('hidden',list.length>0);if(list.length===0)$('empty').innerHTML=q?'<strong>Ничего не найдено</strong>Попробуй другой запрос.':'<strong>Промокодов пока нет</strong>Создай первый промокод в форме слева.';
+}
+function resetForm(){editing=null;$('promoForm').reset();$('limit').value=100;$('duration').value=24;$('unit').value='days';$('formTitle').textContent='Создать промокод';$('submitBtn').textContent='＋ СОЗДАТЬ ПРОМОКОД';$('cancelEdit').classList.add('hidden');unlimitedUI()}
+$('unlimited').addEventListener('change',unlimitedUI);
+$('promoForm').addEventListener('submit',async e=>{e.preventDefault();const code=$('code').value.trim().toUpperCase();const unlimited=$('unlimited').checked;const old=promos.find(p=>p.id===editing);window._pendingPromo={id:editing,code,reward:$('reward').value.trim(),unlimited,limit:unlimited?null:Number($('limit').value),used:old?old.used:0,createdAt:old?old.createdAt:Date.now(),startsAt:$('starts').value==='later'?(old?old.startsAt:Date.now()+3600000):(old?old.startsAt:Date.now()),expiresAt:unlimited?expiresAt():null};const method=editing?'PUT':'POST';try{const r=await fetch('/api/promos'+(editing?'/'+encodeURIComponent(editing):''),{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(window._pendingPromo)});const j=await r.json();if(!r.ok)throw Error(j.error||'Не удалось сохранить');promos=j.promos||[];render();showToast(editing?'Промокод обновлён':'Промокод создан');resetForm()}catch(err){showToast(err.message)}});
+window.editPromo=id=>{const p=promos.find(x=>x.id===id);if(!p)return;editing=id;$('code').value=p.code;$('reward').value=p.reward;$('unlimited').checked=p.unlimited;$('limit').value=p.limit||100;$('formTitle').textContent='Изменить промокод';$('submitBtn').textContent='СОХРАНИТЬ ИЗМЕНЕНИЯ';$('cancelEdit').classList.remove('hidden');unlimitedUI();showToast('Редактирование: '+p.code);window.scrollTo({top:0,behavior:'smooth'})};
+window.deletePromo=async id=>{const p=promos.find(x=>x.id===id);if(p&&confirm(`Удалить промокод ${p.code}?`)){try{const r=await fetch('/api/promos/'+encodeURIComponent(id),{method:'DELETE'});const j=await r.json();if(!r.ok)throw Error(j.error||'Ошибка');promos=j.promos||[];render();if(editing===id)resetForm();showToast('Промокод удалён')}catch(e){showToast(e.message)}}};
+$('cancelEdit').addEventListener('click',resetForm);$('search').addEventListener('input',render);
+$('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(promos,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='standoff3-promocodes.json';a.click();URL.revokeObjectURL(a.href);showToast('Резервная копия экспортирована')});
+$('importBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data)||data.some(p=>!p.code||!p.reward))throw Error();if(confirm('Заменить текущий список данными из файла?')){const r=await fetch('/api/promos/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({promos:data})});const j=await r.json();if(!r.ok)throw Error(j.error||'Ошибка');promos=j.promos||[];render();showToast('Импорт завершён')}}catch{showToast('Не удалось импортировать: неверный JSON')}e.target.value=''});
+load();unlimitedUI();
+</script>
+</body>
+</html>

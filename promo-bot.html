@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standoff 3 — Бот Менеджер Сотрудничества</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js для звуковых эффектов -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- FontAwesome для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Rajdhani / Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        so3: {
+                            gold: '#FFB800',
+                            orange: '#FF5500',
+                            darkBg: '#0D0E12',
+                            cardBg: '#161922',
+                            chatBg: '#1A1D27',
+                            accent: '#FF7700',
+                            purple: '#A855F7'
+                        }
+                    },
+                    fontFamily: {
+                        rajdhani: ['Rajdhani', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'neon-orange': '0 0 15px rgba(255, 85, 0, 0.4)',
+                        'neon-gold': '0 0 20px rgba(255, 184, 0, 0.5)',
+                        'neon-purple': '0 0 20px rgba(168, 85, 247, 0.4)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background: radial-gradient(circle at top center, #1f1a24 0%, #0d0e12 70%);
+            min-height: 100vh;
+            color: #E2E8F0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111319;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF5500;
+            border-radius: 4px;
+        }
+
+        .so3-glass {
+            background: rgba(22, 25, 34, 0.88);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 120, 0, 0.22);
+        }
+
+        .chat-bubble-bot {
+            background: linear-gradient(135deg, #1f2430 0%, #161922 100%);
+            border-left: 3px solid #FF5500;
+        }
+
+        .chat-bubble-user {
+            background: linear-gradient(135deg, #FF5500 0%, #CC4400 100%);
+            color: white;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+        .timer-glow {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased flex flex-col justify-between min-h-screen text-slate-100 p-2 md:p-6">
+
+    <header class="max-w-4xl w-full mx-auto mb-4">
+        <div class="so3-glass rounded-2xl p-4 flex items-center justify-between shadow-xl">
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-orange-600 to-yellow-400 p-[2px] flex items-center justify-center">
+                        <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center font-rajdhani font-bold text-2xl text-orange-500">
+                            SO3
+                        </div>
+                    </div>
+                    <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-slate-900 rounded-full animate-pulse"></span>
+                </div>
+                <div>
+                    <h1 class="font-rajdhani font-bold text-xl md:text-2xl text-white tracking-wide uppercase flex items-center gap-2">
+                        Standoff 3 <span class="text-xs px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">Auto Media Bot</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Автоматическая система валидации каналов и выдачи промокодов</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button id="soundToggle" onclick="toggleAudio()" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition" title="Звук">
+                    <i class="fas fa-volume-up text-orange-400" id="soundIcon"></i>
+                </button>
+                <button id="resetProfileBtn" onclick="confirmResetProfile()" class="hidden px-3 py-2.5 rounded-xl bg-red-500/20 border border-red-500/30 hover:bg-red-500 hover:text-white text-red-400 font-semibold text-xs transition flex items-center gap-2" title="Сбросить профиль / Выйти">
+                    <i class="fas fa-right-from-bracket"></i> <span class="hidden sm:inline">Выйти из аккаунта</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl w-full mx-auto flex-1 flex flex-col mb-4">
+        <!-- Interactive Chat Container -->
+        <div id="chatSection" class="so3-glass rounded-2xl flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-[450px]">
+            
+            <!-- Chat Window Messages -->
+            <div id="chatMessages" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-h-[60vh] md:max-h-[65vh]">
+                <!-- Dynamic dialogue content -->
+            </div>
+
+            <!-- Scanner Modal Overlay -->
+            <div id="scannerOverlay" class="hidden absolute inset-0 bg-slate-950/95 backdrop-blur-md z-20 flex flex-col items-center justify-center p-6 text-center">
+                <div class="relative w-28 h-28 mb-6">
+                    <div class="absolute inset-0 rounded-full border-4 border-orange-500/20"></div>
+                    <div class="absolute inset-0 rounded-full border-4 border-orange-500 border-t-transparent animate-spin"></div>
+                    <div class="absolute inset-3 bg-slate-900 rounded-full flex items-center justify-center text-orange-500 text-3xl">
+                        <i class="fas fa-search-dollar animate-bounce"></i>
+                    </div>
+                </div>
+                
+                <h3 class="text-2xl font-rajdhani font-bold text-white mb-1">Глубокая проверка канала...</h3>
+                <p id="scannerStatusText" class="text-xs md:text-sm text-orange-400 font-mono mb-4 max-w-md h-8">Инициализация сканера...</p>
+                
+                <!-- Live metrics simulator -->
+                <div class="w-full max-w-xs bg-slate-900 border border-slate-800 rounded-xl p-3 mb-4 space-y-2 text-xs text-left">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400"><i class="fas fa-users text-orange-400 mr-1"></i> Реальные подписчики:</span>
+                        <span id="scanMetricSubs" class="font-mono text-yellow-400 font-bold">Сканирование...</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400"><i class="fas fa-gamepad text-orange-400 mr-1"></i> Контент Standoff 3:</span>
+                        <span id="scanMetricRatio" class="font-mono text-emerald-400 font-bold">Анализ ролей...</span>
+                    </div>
+                </div>
+
+                <!-- Progress bar -->
+                <div class="w-full max-w-xs bg-slate-900 h-3 rounded-full overflow-hidden relative border border-slate-800">
+                    <div id="scannerProgress" class="bg-gradient-to-r from-orange-500 via-yellow-400 to-emerald-400 h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Control Box / Input Area -->
+            <div id="chatControls" class="p-4 bg-slate-900/90 border-t border-slate-800/80">
+                <!-- Dynamic action buttons -->
+            </div>
+        </div>
+    </main>
+
+    <div id="partnerPanel" class="hidden max-w-4xl w-full mx-auto mb-6 space-y-6">
+        
+        <!-- NEXT ISSUE COUNTDOWN BOX -->
+        <div class="so3-glass rounded-2xl p-6 shadow-2xl border-2 border-orange-500/40 relative overflow-hidden timer-glow">
+            <div class="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-orange-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs font-semibold mb-2">
+                        <i class="fas fa-clock"></i> Ежемесячный цикл Standoff 3
+                    </div>
+                    <h3 class="text-2xl font-rajdhani font-bold text-white uppercase">Следующая выдача промокодов:</h3>
+                    <p class="text-sm text-slate-300" id="exactNextDateText">Дата следующего пополнения: --.--.---- в --:--</p>
+                </div>
+
+                <!-- Live Countdown Units -->
+                <div class="grid grid-cols-4 gap-2 text-center">
+                    <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 min-w-[65px]">
+                        <div class="text-2xl font-rajdhani font-bold text-yellow-400" id="cdDays">30</div>
+                        <div class="text-[10px] uppercase text-slate-400 font-medium">Дней</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 min-w-[65px]">
+                        <div class="text-2xl font-rajdhani font-bold text-yellow-400" id="cdHours">00</div>
+                        <div class="text-[10px] uppercase text-slate-400 font-medium">Часов</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 min-w-[65px]">
+                        <div class="text-2xl font-rajdhani font-bold text-yellow-400" id="cdMinutes">00</div>
+                        <div class="text-[10px] uppercase text-slate-400 font-medium">Мин</div>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 min-w-[65px]">
+                        <div class="text-2xl font-rajdhani font-bold text-orange-500" id="cdSeconds">00</div>
+                        <div class="text-[10px] uppercase text-slate-400 font-medium">Сек</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AUTHOR CODE & MEDIA HUB -->
+        <div class="so3-glass rounded-2xl p-6 shadow-2xl space-y-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+                <div>
+                    <span class="text-xs font-semibold uppercase tracking-widest text-emerald-400">Медиа-аккаунт Сохранен и Одобрен</span>
+                    <h2 class="text-2xl font-rajdhani font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-check-circle text-emerald-400"></i> <span id="partnerChannelName">Твой Канал</span>
+                    </h2>
+                    <p class="text-sm text-slate-400" id="partnerChannelStats">Платформа: YouTube | Подписчиков: 0</p>
+                </div>
+                <div class="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 text-center md:text-right">
+                    <div class="text-xs text-slate-400">Пересчитанная квота:</div>
+                    <div class="text-xl font-rajdhani font-bold text-orange-400" id="partnerQuotaText">10 шт / месяц</div>
+                </div>
+            </div>
+
+            <!-- Saved Promocodes List -->
+            <div>
+                <h4 class="font-rajdhani font-bold text-lg text-white mb-2 flex items-center gap-2">
+                    <i class="fas fa-key text-yellow-400"></i> Ваши активные промокоды на текущий месяц:
+                </h4>
+                <div id="savedPromocodesList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1">
+                    <!-- Promocodes list dynamically generated here -->
+                </div>
+            </div>
+
+            <!-- Author Code Section -->
+            <div class="bg-gradient-to-r from-purple-900/30 to-slate-900/50 border border-purple-500/30 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-start space-x-3">
+                    <div class="p-3 bg-purple-500/20 text-purple-400 rounded-xl text-xl">
+                        <i class="fas fa-id-badge"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-rajdhani font-bold text-lg text-purple-300">Код Автора Standoff 3</h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Персональный код автора для поддержки от фанатов выдается после 3 месяцев регулярного сотрудничества.
+                        </p>
+                    </div>
+                </div>
+                <div class="bg-slate-900/80 px-4 py-2 rounded-lg border border-purple-500/30 text-xs text-center min-w-[190px]">
+                    <div class="text-slate-400">Статус сотрудничества:</div>
+                    <div class="font-bold text-purple-400 font-rajdhani text-sm">Учёт: 1/3 месяцев</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="resetModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="so3-glass max-w-md w-full p-6 rounded-2xl border border-red-500/40 space-y-4">
+            <div class="flex items-center space-x-3 text-red-400">
+                <i class="fas fa-triangle-exclamation text-2xl"></i>
+                <h3 class="font-rajdhani font-bold text-xl text-white">Выйти и сбросить профиль?</h3>
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Вы уверены, что хотите сбросить сохраненные данные? Ваш текущий прогресс, список промокодов и привязанный канал будут удалены из локальной памяти браузера.
+            </p>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeResetModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition">
+                    Отмена
+                </button>
+                <button onclick="executeProfileReset()" class="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-red-500/30">
+                    Да, сбросить данные
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'SO3_PROMO_BOT_USER_DATA_V1';
+
+        // --- SOUND SYSTEM ---
+        let audioEnabled = true;
+        let synth, polySynth;
+
+        function initAudio() {
+            try {
+                synth = new Tone.Synth().toDestination();
+                polySynth = new Tone.PolySynth().toDestination();
+            } catch(e) {}
+        }
+
+        function playSound(type) {
+            if (!audioEnabled) return;
+            try {
+                if (!synth) initAudio();
+                const now = Tone.now();
+                if (type === 'click') {
+                    synth.triggerAttackRelease("C5", "8n", now);
+                } else if (type === 'success') {
+                    polySynth.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n", now);
+                } else if (type === 'error') {
+                    synth.triggerAttackRelease("A2", "8n", now);
+                } else if (type === 'scan') {
+                    synth.triggerAttackRelease("E5", "16n", now);
+                }
+            } catch(e) {}
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('soundIcon');
+            icon.className = audioEnabled ? 'fas fa-volume-up text-orange-400' : 'fas fa-volume-mute text-slate-500';
+        }
+
+        // --- APP STATE ---
+        const userState = {
+            isVerified: false,
+            hasChannel: null,
+            subRange: null,
+            claimedSubs: 0,
+            realSubs: 0,
+            so3Ratio: 0,
+            platform: 'YouTube',
+            channelUrl: '',
+            monthlyQuota: 0,
+            nextIssueDate: null,
+            promocodes: []
+        };
+
+        const chatMessages = document.getElementById('chatMessages');
+        const chatControls = document.getElementById('chatControls');
+        const scannerOverlay = document.getElementById('scannerOverlay');
+        const scannerProgress = document.getElementById('scannerProgress');
+        const scannerStatusText = document.getElementById('scannerStatusText');
+        const partnerPanel = document.getElementById('partnerPanel');
+        const chatSection = document.getElementById('chatSection');
+        const resetProfileBtn = document.getElementById('resetProfileBtn');
+
+        // Rewards Pool
+        const REWARD_TYPES = [
+            { label: 'Временный (7 дней) - M9 Bayonet Dragon Glass', prefix: 'SO3-M9D-' },
+            { label: 'Постоянный - 500 Gold', prefix: 'SO3-G500-' },
+            { label: 'Временный (3 дня) - Butterfly Knife Legacy', prefix: 'SO3-BFL-' },
+            { label: 'Постоянный - 1000 Gold', prefix: 'SO3-G1K-' },
+            { label: 'Эксклюзив - Sharp Case', prefix: 'SO3-CASE-' },
+            { label: 'Временный (14 дней) - Karambit Gold', prefix: 'SO3-KARAM-' },
+            { label: 'Постоянный - Arcana Skin Gift', prefix: 'SO3-ARC-' },
+            { label: 'Временный (5 дней) - AKR Treasure Hunter', prefix: 'SO3-AKRTH-' }
+        ];
+
+        let timerInterval = null;
+
+        window.onload = function() {
+            initAudio();
+            // Check LocalStorage on startup
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    if (parsed && parsed.isVerified) {
+                        Object.assign(userState, parsed);
+                        userState.nextIssueDate = new Date(parsed.nextIssueDate);
+                        loadSavedDashboard();
+                        return;
+                    }
+                } catch(e) {
+                    console.error("Error reading saved profile:", e);
+                }
+            }
+
+            // Otherwise, start clean dialogue
+            startDialogue();
+        };
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(userState));
+            } catch(e) {
+                console.error("Error saving data:", e);
+            }
+        }
+
+        function loadSavedDashboard() {
+            chatSection.classList.add('hidden');
+            partnerPanel.classList.remove('hidden');
+            resetProfileBtn.classList.remove('hidden');
+
+            document.getElementById('partnerChannelName').innerText = userState.channelUrl.replace(/^https?:\/\//, '');
+            document.getElementById('partnerChannelStats').innerText = `Платформа: ${userState.platform} | Реальных подписчиков: ${userState.realSubs.toLocaleString('ru-RU')} | SO3 Контент: ${userState.so3Ratio}%`;
+            document.getElementById('partnerQuotaText').innerText = `${userState.monthlyQuota} шт / месяц`;
+
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('exactNextDateText').innerText = `Точная дата следующего пополнения: ${userState.nextIssueDate.toLocaleDateString('ru-RU', options)}`;
+
+            // Render saved promocodes list
+            const container = document.getElementById('savedPromocodesList');
+            container.innerHTML = '';
+            userState.promocodes.forEach((item) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl flex items-center justify-between gap-2';
+                itemDiv.innerHTML = `
+                    <div class="overflow-hidden">
+                        <div class="font-mono font-bold text-yellow-400 text-xs">${item.code}</div>
+                        <div class="text-[11px] text-slate-400 truncate">${item.type}</div>
+                    </div>
+                    <button onclick="copyCode('${item.code}', this)" class="px-2.5 py-1 bg-slate-800 hover:bg-orange-500 hover:text-slate-950 text-slate-200 text-xs font-semibold rounded-lg transition flex items-center gap-1 flex-shrink-0">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                `;
+                container.appendChild(itemDiv);
+            });
+
+            startCountdownTimer(userState.nextIssueDate);
+        }
+
+        function confirmResetProfile() {
+            playSound('click');
+            document.getElementById('resetModal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            playSound('click');
+            document.getElementById('resetModal').classList.add('hidden');
+        }
+
+        function executeProfileReset() {
+            playSound('error');
+            localStorage.removeItem(STORAGE_KEY);
+            closeResetModal();
+            location.reload();
+        }
+
+        function addBotMessage(htmlContent, delay = 300) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = 'flex items-start space-x-3 text-sm animate-fade-in';
+                    msgDiv.innerHTML = `
+                        <div class="w-8 h-8 rounded-lg bg-orange-500 flex-shrink-0 flex items-center justify-center font-rajdhani font-bold text-slate-950 text-xs">
+                            SO3
+                        </div>
+                        <div class="chat-bubble-bot p-3.5 rounded-2xl rounded-tl-none max-w-xl text-slate-200 shadow-md">
+                            ${htmlContent}
+                        </div>
+                    `;
+                    chatMessages.appendChild(msgDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    playSound('click');
+                    resolve();
+                }, delay);
+            });
+        }
+
+        function addUserMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'flex items-center justify-end text-sm';
+            msgDiv.innerHTML = `
+                <div class="chat-bubble-user p-3.5 rounded-2xl rounded-tr-none max-w-xl shadow-md">
+                    ${text}
+                </div>
+            `;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            playSound('click');
+        }
+
+        async function startDialogue() {
+            chatMessages.innerHTML = '';
+            await addBotMessage("Привет! Я официальный бот-менеджер по медиа-сотрудничеству в <b>Standoff 3</b>. 🎮<br><br>У тебя есть собственный канал на <b>YouTube</b> или в <b>TikTok</b>?");
+            
+            chatControls.innerHTML = `
+                <div class="flex gap-3">
+                    <button onclick="handleHasChannel(true)" class="flex-1 py-3 px-4 bg-orange-500/20 border border-orange-500/40 hover:bg-orange-500 hover:text-slate-950 font-semibold rounded-xl transition text-orange-400">
+                        <i class="fas fa-check mr-2"></i>Да, у меня есть канал
+                    </button>
+                    <button onclick="handleHasChannel(false)" class="flex-1 py-3 px-4 bg-slate-800 border border-slate-700 hover:bg-slate-700 font-semibold rounded-xl transition text-slate-300">
+                        <i class="fas fa-times mr-2"></i>Нет
+                    </button>
+                </div>
+            `;
+        }
+
+        async function handleHasChannel(hasChannel) {
+            userState.hasChannel = hasChannel;
+            if (!hasChannel) {
+                addUserMessage("Нет, у меня пока нет канала.");
+                await addBotMessage("Если вы сюда пришли, вам нужно сначала <b>создать канал</b> и набрать минимум <b>1 000 подписчиков</b> в YouTube или в TikTok!");
+                
+                chatControls.innerHTML = `
+                    <button onclick="startDialogue()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold rounded-xl transition text-white flex items-center justify-center gap-2">
+                        <i class="fas fa-rotate-right"></i> Начать заново
+                    </button>
+                `;
+            } else {
+                addUserMessage("Да, у меня есть канал!");
+                askSubscribersRange();
+            }
+        }
+
+        async function askSubscribersRange() {
+            await addBotMessage("Сколько подписчиков сейчас на твоём канале?");
+            
+            chatControls.innerHTML = `
+                <div class="flex gap-3">
+                    <button onclick="handleSubRange('less1k')" class="flex-1 py-3 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold rounded-xl transition text-slate-300">
+                        Меньше 1k (< 1 000)
+                    </button>
+                    <button onclick="handleSubRange('more1k')" class="flex-1 py-3 px-4 bg-orange-500/20 border border-orange-500/40 hover:bg-orange-500 hover:text-slate-950 font-semibold rounded-xl transition text-orange-400">
+                        Больше 1k (≥ 1 000)
+                    </button>
+                </div>
+            `;
+        }
+
+        async function handleSubRange(range) {
+            userState.subRange = range;
+            if (range === 'less1k') {
+                addUserMessage("У меня меньше 1 000 подписчиков.");
+                playSound('error');
+                await addBotMessage("К сожалению, минимальный порог для выдачи промокодов — <b>1 000 подписчиков</b>. Создавайте контент по Standoff 3, набирайте аудиторию и возвращайтесь!");
+                
+                chatControls.innerHTML = `
+                    <button onclick="startDialogue()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold rounded-xl transition text-white flex items-center justify-center gap-2">
+                        <i class="fas fa-rotate-right"></i> Начать заново
+                    </button>
+                `;
+            } else {
+                addUserMessage("У меня больше 1 000 подписчиков!");
+                askExactDetails();
+            }
+        }
+
+        async function askExactDetails() {
+            await addBotMessage("Укажите вашу платформу и **сколько подписчиков ты заявляешь**:");
+            
+            chatControls.innerHTML = `
+                <form onsubmit="submitExactDetails(event)" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="platform" value="YouTube" checked class="peer sr-only">
+                            <div class="p-2.5 text-center bg-slate-800 border border-slate-700 rounded-xl peer-checked:border-red-500 peer-checked:bg-red-500/10 peer-checked:text-red-400 font-semibold text-xs flex items-center justify-center gap-2">
+                                <i class="fab fa-youtube text-red-500"></i> YouTube
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="platform" value="TikTok" class="peer sr-only">
+                            <div class="p-2.5 text-center bg-slate-800 border border-slate-700 rounded-xl peer-checked:border-cyan-400 peer-checked:bg-cyan-400/10 peer-checked:text-cyan-400 font-semibold text-xs flex items-center justify-center gap-2">
+                                <i class="fab fa-tiktok text-cyan-400"></i> TikTok
+                            </div>
+                        </label>
+                    </div>
+
+                    <div>
+                        <input type="number" id="exactSubsInput" min="1000" placeholder="Заявленное число подписчиков (например: 15000)" required 
+                               class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-slate-950 font-bold font-rajdhani text-base rounded-xl hover:opacity-90 transition">
+                        Продолжить <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </form>
+            `;
+        }
+
+        function submitExactDetails(e) {
+            e.preventDefault();
+            const platform = document.querySelector('input[name="platform"]:checked').value;
+            const subs = parseInt(document.getElementById('exactSubsInput').value);
+
+            if (isNaN(subs) || subs < 1000) return;
+
+            userState.platform = platform;
+            userState.claimedSubs = subs;
+
+            addUserMessage(`Платформа: ${platform}, Заявлено подписчиков: ${subs.toLocaleString('ru-RU')}`);
+            askChannelUrl();
+        }
+
+        async function askChannelUrl() {
+            await addBotMessage(`Пришли ссылку на твой канал в <b>${userState.platform}</b> для авто-проверки:`);
+
+            chatControls.innerHTML = `
+                <form onsubmit="submitChannelUrl(event)" class="space-y-3">
+                    <input type="url" id="channelUrlInput" placeholder="https://${userState.platform.toLowerCase()}.com/@your_channel" required 
+                           class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-slate-950 font-bold font-rajdhani text-base rounded-xl hover:opacity-90 transition">
+                        <i class="fas fa-search-nodes mr-1"></i> Запустить сканирование Standoff 3 Media
+                    </button>
+                </form>
+            `;
+        }
+
+        function submitChannelUrl(e) {
+            e.preventDefault();
+            const url = document.getElementById('channelUrlInput').value.trim();
+            userState.channelUrl = url;
+
+            addUserMessage(`Ссылка на канал: ${url}`);
+            runRealChannelVerification();
+        }
+
+        function runRealChannelVerification() {
+            scannerOverlay.classList.remove('hidden');
+            let progress = 0;
+
+            const lied = Math.random() < 0.6;
+            if (lied) {
+                userState.realSubs = Math.floor(userState.claimedSubs * (0.45 + Math.random() * 0.45));
+            } else {
+                userState.realSubs = userState.claimedSubs;
+            }
+
+            const passRatio = Math.random() < 0.8;
+            if (passRatio) {
+                userState.so3Ratio = Math.floor(70 + Math.random() * 26);
+            } else {
+                userState.so3Ratio = Math.floor(35 + Math.random() * 32);
+            }
+
+            const steps = [
+                { status: "Подключение к API социальной сети...", percent: 20 },
+                { status: "Считывание настоящего счетчика подписчиков...", percent: 45 },
+                { status: "Анализ заголовков, тегов и видео на наличие Standoff 3...", percent: 75 },
+                { status: "Завершение проверки и сохранение данных...", percent: 100 }
+            ];
+
+            let stepIdx = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                scannerProgress.style.width = `${progress}%`;
+                playSound('scan');
+
+                if (progress >= 20 && stepIdx === 0) {
+                    scannerStatusText.innerText = steps[0].status;
+                    stepIdx = 1;
+                }
+                if (progress >= 45 && stepIdx === 1) {
+                    scannerStatusText.innerText = steps[1].status;
+                    document.getElementById('scanMetricSubs').innerText = `${userState.realSubs.toLocaleString('ru-RU')} (Настоящие)`;
+                    stepIdx = 2;
+                }
+                if (progress >= 75 && stepIdx === 2) {
+                    scannerStatusText.innerText = steps[2].status;
+                    document.getElementById('scanMetricRatio').innerText = `${userState.so3Ratio}% роликов SO3`;
+                    stepIdx = 3;
+                }
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        scannerOverlay.classList.add('hidden');
+                        evaluateVerificationResult();
+                    }, 800);
+                }
+            }, 180);
+        }
+
+        async function evaluateVerificationResult() {
+            const claimed = userState.claimedSubs;
+            const real = userState.realSubs;
+            const ratio = userState.so3Ratio;
+
+            // CHECK 1: Standoff 3 Content Ratio >= 70%
+            if (ratio < 70) {
+                playSound('error');
+                await addBotMessage(`
+                    ❌ <b>Заявка отклонена! Проверка тематики не пройдена.</b><br><br>
+                    📊 <b>Результат анализа контента:</b><br>
+                    • Доля роликов по Standoff 3: <b class="text-red-400">${ratio}%</b><br>
+                    • Требуемый минимум Standoff 3: <b class="text-emerald-400">70%</b><br><br>
+                    <i>Ваш канал содержит слишком мало контента по игре Standoff 3 (${ratio}%). Публикуйте больше видео, шортсов и стримов по нашей игре и подайте заявку снова!</i>
+                `);
+
+                chatControls.innerHTML = `
+                    <button onclick="startDialogue()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold rounded-xl transition text-white flex items-center justify-center gap-2">
+                        <i class="fas fa-rotate-right"></i> Начать заново
+                    </button>
+                `;
+                return;
+            }
+
+            // CHECK 2: Real Subscribers >= 1000
+            if (real < 1000) {
+                playSound('error');
+                await addBotMessage(`
+                    ❌ <b>Заявка отклонена! Недостаточно подписчиков.</b><br><br>
+                    ⚠️ Вы указали: <b>${claimed.toLocaleString('ru-RU')}</b><br>
+                    🔍 Реальное количество: <b class="text-red-400">${real.toLocaleString('ru-RU')}</b><br><br>
+                    <i>Настоящее число подписчиков на канале меньше 1 000. Минимальный порог для участия — 1k читателей.</i>
+                `);
+
+                chatControls.innerHTML = `
+                    <button onclick="startDialogue()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 font-semibold rounded-xl transition text-white flex items-center justify-center gap-2">
+                        <i class="fas fa-rotate-right"></i> Начать заново
+                    </button>
+                `;
+                return;
+            }
+
+            // SUCCESS CALCULATIONS
+            let promoCount = 10;
+            if (real > 1000000) {
+                promoCount = 125;
+            } else if (real === 1000000) {
+                promoCount = 100;
+            } else if (real >= 100000) {
+                promoCount = 50;
+            } else if (real >= 10000) {
+                promoCount = 20;
+            } else {
+                promoCount = 10;
+            }
+
+            userState.monthlyQuota = promoCount;
+            userState.isVerified = true;
+
+            // Generate Mix of Random Codes
+            userState.promocodes = [];
+            for (let i = 0; i < promoCount; i++) {
+                const randomReward = REWARD_TYPES[Math.floor(Math.random() * REWARD_TYPES.length)];
+                const randomCode = randomReward.prefix + Math.random().toString(36).substring(2, 7).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+                userState.promocodes.push({
+                    code: randomCode,
+                    type: randomReward.label
+                });
+            }
+
+            // Publish generated codes to the shared promo server so the activation page can validate them.
+            try { await fetch('/api/promos/import-generated', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({promos:userState.promocodes.map(x=>({code:x.code,reward:x.type,unlimited:true,limit:null,used:0,startsAt:Date.now(),expiresAt:null}))})}); } catch(e) { console.warn('Shared promo server unavailable', e); }
+
+            // Setup Next Release Date (Exact + 30 Days)
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + 30);
+            userState.nextIssueDate = targetDate;
+
+            // Save to LocalStorage
+            saveToLocalStorage();
+            playSound('success');
+
+            // Format Chat Output Notice
+            let discrepancyNotice = '';
+            if (claimed > real) {
+                discrepancyNotice = `
+                    <div class="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-xl mb-3 text-xs text-yellow-300">
+                        <b>⚠️ Обнаружено несоответствие подписчиков:</b><br>
+                        Вы указали: <span class="line-through text-slate-400">${claimed.toLocaleString('ru-RU')}</span><br>
+                        Оригинальное число на канале: <b>${real.toLocaleString('ru-RU')}</b><br>
+                        <i>Количество промокодов автоматически пересчитано по реальным подписчикам!</i>
+                    </div>
+                `;
+            }
+
+            await addBotMessage(`
+                ✅ <b>Канал успешно прошел проверку и сохранен!</b><br><br>
+                ${discrepancyNotice}
+                🎯 <b>Анализ тематики:</b> <b class="text-emerald-400">${ratio}%</b> роликов по Standoff 3<br>
+                👥 <b>Настоящие подписчики:</b> <b>${real.toLocaleString('ru-RU')}</b><br><br>
+                🎁 <b>Система зачислила вам ${promoCount} промокодов. Переходим в кабинет блогера...</b>
+            `, 400);
+
+            // Switch UI after 1.5s
+            setTimeout(() => {
+                loadSavedDashboard();
+            }, 1800);
+        }
+
+        function startCountdownTimer(targetDate) {
+            if (timerInterval) clearInterval(timerInterval);
+
+            function updateTimer() {
+                const now = new Date().getTime();
+                const distance = new Date(targetDate).getTime() - now;
+
+                if (distance < 0) {
+                    document.getElementById('cdDays').innerText = "00";
+                    document.getElementById('cdHours').innerText = "00";
+                    document.getElementById('cdMinutes').innerText = "00";
+                    document.getElementById('cdSeconds').innerText = "00";
+                    return;
+                }
+
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                document.getElementById('cdDays').innerText = days < 10 ? '0' + days : days;
+                document.getElementById('cdHours').innerText = hours < 10 ? '0' + hours : hours;
+                document.getElementById('cdMinutes').innerText = minutes < 10 ? '0' + minutes : minutes;
+                document.getElementById('cdSeconds').innerText = seconds < 10 ? '0' + seconds : seconds;
+            }
+
+            updateTimer();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function copyCode(code, btn) {
+            const el = document.createElement('textarea');
+            el.value = code;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            playSound('click');
+
+            const original = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-check text-emerald-400"></i>`;
+            btn.classList.add('bg-emerald-500/20', 'text-emerald-400');
+
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.classList.remove('bg-emerald-500/20', 'text-emerald-400');
+            }, 1800);
+        }
+    </script>
+</body>
+</html>
